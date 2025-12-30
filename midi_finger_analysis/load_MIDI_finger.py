@@ -10,7 +10,7 @@ from midi_state_analysis.folder_utils import find_midi_data_folder
 # If not found, fall back to the original hardcoded path.
 root_folder = find_midi_data_folder(start_path='.')
 if root_folder is None:
-    root_folder = r"C:\Users\joshb\Desktop\CODE\BIND_AR_PIANO_ISG_midi_state_analysis\Daten (MIDI)"
+    root_folder = r"..\Daten (MIDI)"
     print(f"Warning: 'Daten (MIDI)' not found; falling back to {root_folder}")
 else:
     print(f"Using MIDI data folder: {root_folder}")
