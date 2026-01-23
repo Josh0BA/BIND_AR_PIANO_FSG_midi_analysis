@@ -302,6 +302,28 @@ for dirpath, dirnames, filenames in os.walk(root_folder):
 df = pd.DataFrame(data)
 print(df)
 
-# Control -> Remove duplicate states, keeping only the last occurrence of consecutive identical states
+#Control: Remove duplicate states, keeping only the last occurrence of consecutive identical states
+def filter_consecutive_states(states_list):
+    if not states_list:
+        return []
+    
+    filtered = []
+    for i in range(len(states_list)):
+        current_state = states_list[i]['state']
+        
+        # Prüfen, ob dies das letzte Element ist ODER ob der nächste Zustand anders ist
+        if i == len(states_list) - 1 or current_state != states_list[i + 1]['state']:
+            filtered.append(states_list[i])
+            
+    return filtered
+
+# Anwenden auf die Spalte im DataFrame
+df['detected_states'] = df['detected_states'].apply(filter_consecutive_states)
+
+# Kurze Kontrolle im Terminal
+for idx, row in df.iterrows():
+    states_only = [s['state'] for s in row['detected_states']]
+    print(f"ID: {row['Participant_ID']} | Sequence: {states_only}")
+
 # - Compare detected state sequence against expected sequence (from config)
 # Analyze -> Compute transition times between states
