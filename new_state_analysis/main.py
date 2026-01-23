@@ -338,7 +338,7 @@ def check_sequence_accuracy(row):
     test_type = str(row['Test']).lower()
     
     if 'auf' in test_type:  # Deckt 'aufwärmen' ab
-        target = aufwähren
+        target = aufwärmen
     elif 'block' in test_type:
         target = block
     elif 'pre' in test_type or 'post' in test_type:
