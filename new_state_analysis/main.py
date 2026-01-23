@@ -1,11 +1,10 @@
 # Load Data -> MIDI -> Extract Pitches
 import os
 import re
-from typing import Set
+from typing import Set, Dict
 import pretty_midi
 import pandas as pd
 import numpy as np
-from pyparsing import Dict
 
 from midi_state_analysis.folder_utils import find_midi_data_folder
 
@@ -14,16 +13,181 @@ from midi_state_analysis.folder_utils import find_midi_data_folder
 # ---------------------------------------------------------------------------
 
 STATE_DEFS: Dict[int, Set[int]] = {
-    1: {65, 67, 72, 74, 77, 79},  # state1: F4, G4, C5, D5, F5, G5
-    2: {60, 62, 64, 72, 77, 79},  # state2: C4, D4, E4, C5, F5, G5
-    3: {60, 62, 64, 67, 72, 76},  # state3: C4, D4, E4, G4, C5, E5
-    4: {60, 62, 64, 76, 77, 79},  # state4: C4, D4, E4, E5, F5, G5
-    5: {62, 64, 65, 76, 77, 79},  # state5: D4, E4, F4, E5, F5, G5
-    6: {64, 65, 72, 76, 77, 79},  # state6: E4, F4, C5, E5, F5, G5
-    7: {60, 62, 72, 74, 76, 77},  # state7: C4, D4, C5, D5, E5, F5
-    8: {64, 65, 72, 74, 77, 79},  # state8: E4, F4, C5, D5, F5, G5
-    9: {62, 64, 65, 67, 72, 74},  # state9: D4, E4, F4, G4, C5, D5
+    0: {65, 67, 72, 74, 77, 79},  # state1: F4, G4, C5, D5, F5, G5
+    1: {60, 62, 64, 72, 77, 79},  # state2: C4, D4, E4, C5, F5, G5
+    2: {60, 62, 64, 67, 72, 76},  # state3: C4, D4, E4, G4, C5, E5
+    3: {60, 62, 64, 76, 77, 79},  # state4: C4, D4, E4, E5, F5, G5
+    4: {62, 64, 65, 76, 77, 79},  # state5: D4, E4, F4, E5, F5, G5
+    5: {64, 65, 72, 76, 77, 79},  # state6: E4, F4, C5, E5, F5, G5
+    6: {60, 62, 72, 74, 76, 77},  # state7: C4, D4, C5, D5, E5, F5
+    7: {64, 65, 72, 74, 77, 79},  # state8: E4, F4, C5, D5, F5, G5
+    8: {62, 64, 65, 67, 72, 74},  # state9: D4, E4, F4, G4, C5, D5
 }
+
+aufwähren = [
+    6,
+    3,
+    0,
+    8,
+    4,
+    8,
+    3,
+    6,
+    4,
+    1,
+    7,
+    1,
+    0,
+    5,
+    8,
+    5,
+    3,
+    1,
+    4,
+    3,
+    2,
+    0,
+    4,
+    0,
+    3,
+    7,
+    6,
+    1
+]
+
+block = [
+    5,
+    6,
+    7,
+    8,
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    8,
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    4,
+    5,
+    6,
+    7,
+    8,
+    0,
+    1,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    0,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    7,
+    8,
+    0,
+    1,
+    2,
+    3,
+    4,
+    6,
+    7,
+    8,
+    0,
+    1,
+    2,
+    3,
+    5,
+    6,
+    7,
+    8,
+    0,
+    1,
+    2,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+]
+
+pre_post_test = [
+    8,
+    0,
+    2,
+    1,
+    3,
+    5,
+    4,
+    6,
+    8,
+    7,
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    0,
+    2,
+    1,
+    3,
+    5,
+    4,
+    6,
+    8,
+    7,
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    0,
+    2,
+    1,
+    3,
+    5,
+    4,
+    6,
+    8,
+    7,
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+]
 
 # Locate the MIDI data folder named "Daten (MIDI)" using folder_utils.
 # If not found, fall back to the original hardcoded path.
@@ -39,7 +203,7 @@ data = []
 # Walk through all subfolders
 for dirpath, dirnames, filenames in os.walk(root_folder):
     for filename in filenames:
-        if filename.lower().endswith(('.mid', '.midi')) and 'finger' in filename.lower():
+        if filename.lower().endswith(('.mid', '.midi')) and ('B' in filename.upper() or 'P' in filename.upper()):
             file_path = os.path.join(dirpath, filename)
 
             try:
@@ -50,10 +214,6 @@ for dirpath, dirnames, filenames in os.walk(root_folder):
                 if len(parts) >= 3 and parts[0].upper() == 'MIDI':
                     participant_id = parts[1]
                     test_attempt = parts[2].split('.')[0]
-                else:
-                    # Fallback to legacy format: {ParticipantID}_{Appointment}_{Song}_{Attempt}.mid
-                    participant_id = parts[0]
-                    test_attempt = parts[2].split('.')[0] if len(parts) > 2 else 'Fingertest1'
 
                 # Split test name and attempt (attempt expected as trailing digits)
                 match = re.match(r"([A-Za-z]+)(\d+)", test_attempt)
@@ -87,39 +247,48 @@ for dirpath, dirnames, filenames in os.walk(root_folder):
                 detected_states = []
                 window_size = 10
 
-                for i in range(0, len(played_notes) - window_size + 1, window_size):
+                #to do am schluss noch anpassen dass dann halt window nur noch 9,8,7,6 weniger als 6 macht keinen sinn da stat min 6
+                for i in range(0, len(played_notes) - window_size + 1, window_size): #+1??
                     window_notes = played_notes[i:i + window_size]
                     window_pitches = {note['pitch'] for note in window_notes}
                     
                     # Find matching state: check if all 6 expected state pitches are in the window
                     # (additional pitches are ignored)
                     best_match = None
+                    best_match_pitches = None
                     
                     for state_num, state_pitches in STATE_DEFS.items():
                         # Subset matching: all state pitches must be in window pitches
                         if state_pitches.issubset(window_pitches):
                             best_match = state_num
+                            best_match_pitches = state_pitches
                             break
                     
+                    # - When a state is recognized, save the state with associated pitches, start time, and end time
                     if best_match is not None:
+                        # Pick at most one note per expected pitch, taking the earliest occurrence
+                        seen_pitches = set()
+                        state_notes = []
+                        for note in window_notes:
+                            if note['pitch'] in best_match_pitches and note['pitch'] not in seen_pitches:
+                                state_notes.append(note)
+                                seen_pitches.add(note['pitch'])
                         detected_states.append({
                             'state': best_match,
-                            'notes': window_notes,
+                            'notes': state_notes,
                             'start_time': window_notes[0]['start'],
                             'end_time': window_notes[-1]['end'],
-                            'window_index': i // window_size
+                            'window_index': i // window_size 
                         })
 
-# - When a state is recognized, save the state with associated pitches, start time, and end time
-#
-# Control -> Remove duplicate states, keeping only the last occurrence of consecutive identical states
-# - Compare detected state sequence against expected sequence (from config)
-# prepare the data for DataFrame
+                # prepare the data for DataFrame
                 info = {
                     'Participant_ID': participant_id,
-                    'Test': test_name,
-                    'Attempt': attempt,
-                    'Keystrokes': len(played_notes),
+                    'Test': test_name, #example: Fingertest
+                    'Attempt': attempt, #example: 2
+                    'detected_states': detected_states,
+                    # 'all_pitches': [n['pitch'] for n in played_notes],  # Liste von Werten
+                    # 'Keystrokes': len(played_notes),
                     # 'Correct_Sequences': correct_sequences,
                 }
 
@@ -129,4 +298,10 @@ for dirpath, dirnames, filenames in os.walk(root_folder):
             except Exception as e:
                 print(f"❌ Failed to load {file_path}: {e}")
 
+#create DataFram
+df = pd.DataFrame(data)
+print(df)
+
+# Control -> Remove duplicate states, keeping only the last occurrence of consecutive identical states
+# - Compare detected state sequence against expected sequence (from config)
 # Analyze -> Compute transition times between states

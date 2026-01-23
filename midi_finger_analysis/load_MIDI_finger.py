@@ -31,10 +31,6 @@ for dirpath, dirnames, filenames in os.walk(root_folder):
                 if len(parts) >= 3 and parts[0].upper() == 'MIDI':
                     participant_id = parts[1]
                     test_attempt = parts[2].split('.')[0]
-                else:
-                    # Fallback to legacy format: {ParticipantID}_{Appointment}_{Song}_{Attempt}.mid
-                    participant_id = parts[0]
-                    test_attempt = parts[2].split('.')[0] if len(parts) > 2 else 'Fingertest1'
 
                 # Split test name and attempt (attempt expected as trailing digits)
                 match = re.match(r"([A-Za-z]+)(\d+)", test_attempt)
