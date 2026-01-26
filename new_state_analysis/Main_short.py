@@ -245,43 +245,70 @@ for dirpath, dirnames, filenames in os.walk(root_folder):
                                 'start': note.start,
                                 'end': note.end
                             })
-                # - Analyze pitches in 10-note windows (iterate through array in steps of 10)
-                detected_states = []
-                window_size = 10
+                
+                # --- NEUE LOGIK: Sequenz-gesteuerte State-Erkennung ---
+                
+                # 1. Bestimme die Ziel-Sequenz basierend auf dem Test-Namen
+                test_type = str(test_name).lower()
+                if 'auf' in test_type:
+                    target_sequence = aufwärmen
+                elif test_type.startswith('b') or 'block' in test_type:
+                    target_sequence = block
+                elif 'pre' in test_type or 'post' in test_type:
+                    target_sequence = pre_post_test
+                else:
+                    target_sequence = []
 
-                #to do am schluss noch anpassen dass dann halt window nur noch 9,8,7,6 weniger als 6 macht keinen sinn da stat min 6
-                for i in range(0, len(played_notes) - window_size + 1, window_size): #+1??
-                    window_notes = played_notes[i:i + window_size]
-                    window_pitches = {note['pitch'] for note in window_notes}
+                detected_states = []
+                current_note_idx = 0
+                
+                # Wir gehen die Ziel-Zustände nacheinander durch
+                for state_index, target_state_id in enumerate(target_sequence):
+                    required_pitches = STATE_DEFS[target_state_id]
                     
-                    # Find matching state: check if all 6 expected state pitches are in the window
-                    # (additional pitches are ignored)
-                    best_match = None
-                    best_match_pitches = None
+                    # Suche in den verbleibenden Noten nach diesem spezifischen State
+                    # Wir nutzen ein gleitendes Fenster ab der aktuellen Position
+                    found_state = False
                     
-                    for state_num, state_pitches in STATE_DEFS.items():
-                        # Subset matching: all state pitches must be in window pitches
-                        if state_pitches.issubset(window_pitches):
-                            best_match = state_num
-                            best_match_pitches = state_pitches
+                    # Suche vorwärts, bis wir eine Gruppe von Noten finden, die den State erfüllt
+                    # window_size von 12 bietet etwas Puffer für falsche Töne
+                    search_window_size = 12 
+                    
+                    for i in range(current_note_idx, len(played_notes) - 5):
+                        window = played_notes[i : i + search_window_size]
+                        window_pitches = {n['pitch'] for n in window}
+                        
+                        if required_pitches.issubset(window_pitches):
+                            # State gefunden! Extrahiere die relevanten Noten
+                            seen_pitches = set()
+                            state_notes = []
+                            for n in window:
+                                if n['pitch'] in required_pitches and n['pitch'] not in seen_pitches:
+                                    state_notes.append(n)
+                                    seen_pitches.add(n['pitch'])
+                            
+                            # Sortiere state_notes nach Zeit, um korrekte Start/End-Zeiten zu haben
+                            state_notes = sorted(state_notes, key=lambda x: x['start'])
+                            
+                            detected_states.append({
+                                'state': target_state_id,
+                                'notes': state_notes,
+                                'start_time': state_notes[0]['start'],
+                                'end_time': state_notes[-1]['end'],
+                                'target_index': state_index # Position in der Soll-Sequenz
+                            })
+                            
+                            # Setze den Zeiger hinter die letzte Note dieses erkannten States
+                            # damit wir nicht dieselben Noten für den nächsten State nutzen
+                            last_note_in_state = max([played_notes.index(n) for n in state_notes])
+                            current_note_idx = last_note_in_state + 1
+                            found_state = True
                             break
                     
-                    # - When a state is recognized, save the state with associated pitches, start time, and end time
-                    if best_match is not None:
-                        # Pick at most one note per expected pitch, taking the earliest occurrence
-                        seen_pitches = set()
-                        state_notes = []
-                        for note in window_notes:
-                            if note['pitch'] in best_match_pitches and note['pitch'] not in seen_pitches:
-                                state_notes.append(note)
-                                seen_pitches.add(note['pitch'])
-                        detected_states.append({
-                            'state': best_match,
-                            'notes': state_notes,
-                            'start_time': window_notes[0]['start'],
-                            'end_time': window_notes[-1]['end'],
-                            'window_index': i // window_size 
-                        })
+                    # Optional: Wenn ein State gar nicht gefunden wurde, könnten wir die Suche 
+                    # ab der aktuellen Position für den NÄCHSTEN State fortsetzen.
+                    if not found_state:
+                        print(f"   ℹ️ State {target_state_id} an Position {state_index} nicht gefunden.")
 
                 # prepare the data for DataFrame
                 info = {
