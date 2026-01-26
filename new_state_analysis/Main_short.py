@@ -262,20 +262,20 @@ for dirpath, dirnames, filenames in os.walk(root_folder):
                 detected_states = []
                 current_note_idx = 0
                 
+                # --- SICHERERE LOGIK: Sequenz-gesteuert mit Abbruch-Limit ---
+                max_search_range = 20  # Wie viele Noten darf das Skript "durchsuchen", um den State zu finden?
+                
                 # Wir gehen die Ziel-Zustände nacheinander durch
                 for state_index, target_state_id in enumerate(target_sequence):
                     required_pitches = STATE_DEFS[target_state_id]
-                    
-                    # Suche in den verbleibenden Noten nach diesem spezifischen State
-                    # Wir nutzen ein gleitendes Fenster ab der aktuellen Position
                     found_state = False
                     
-                    # Suche vorwärts, bis wir eine Gruppe von Noten finden, die den State erfüllt
-                    # window_size von 12 bietet etwas Puffer für falsche Töne
-                    search_window_size = 12 
+                    # Wir begrenzen die Suche auf einen Bereich ab der aktuellen Note
+                    search_limit = min(current_note_idx + max_search_range, len(played_notes))
                     
-                    for i in range(current_note_idx, len(played_notes) - 5):
-                        window = played_notes[i : i + search_window_size]
+                    for i in range(current_note_idx, search_limit - 5):
+                        # Kleines Fenster von 10 Noten für die Erkennung eines 6er-Akkords
+                        window = played_notes[i : i + 10]
                         window_pitches = {n['pitch'] for n in window}
                         
                         if required_pitches.issubset(window_pitches):
@@ -295,7 +295,8 @@ for dirpath, dirnames, filenames in os.walk(root_folder):
                                 'notes': state_notes,
                                 'start_time': state_notes[0]['start'],
                                 'end_time': state_notes[-1]['end'],
-                                'target_index': state_index # Position in der Soll-Sequenz
+                                'target_index': state_index, # Position in der Soll-Sequenz
+                                'notes_skipped': i - current_note_idx  # WICHTIG: Wie viele Noten waren "Müll" dazwischen?
                             })
                             
                             # Setze den Zeiger hinter die letzte Note dieses erkannten States
@@ -305,9 +306,16 @@ for dirpath, dirnames, filenames in os.walk(root_folder):
                             found_state = True
                             break
                     
-                    # Optional: Wenn ein State gar nicht gefunden wurde, könnten wir die Suche 
-                    # ab der aktuellen Position für den NÄCHSTEN State fortsetzen.
                     if not found_state:
+                        # Hier markieren wir explizit eine Lücke in der Datenstruktur
+                        detected_states.append({
+                            'state': None, 
+                            'expected_state': target_state_id,
+                            'target_index': state_index,
+                            'error': 'MISSING'
+                        })
+                        # Wir setzen current_note_idx NICHT weiter, um dem nächsten State 
+                        # die Chance zu geben, ab der gleichen Stelle gefunden zu werden.
                         print(f"   ℹ️ State {target_state_id} an Position {state_index} nicht gefunden.")
 
                 # prepare the data for DataFrame
