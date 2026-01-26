@@ -24,7 +24,7 @@ STATE_DEFS: Dict[int, Set[int]] = {
     8: {62, 64, 65, 67, 72, 74},  # state9: D4, E4, F4, G4, C5, D5
 }
 
-aufwähren = [
+aufwärmen = [
     6,
     3,
     0,
