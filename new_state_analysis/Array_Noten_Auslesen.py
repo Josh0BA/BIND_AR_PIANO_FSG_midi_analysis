@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import mido
 import pandas as pd
 
@@ -17,12 +19,18 @@ STATE_DEFS = {
 # Erzeuge ein Set aller erlaubten Pitches aus den States
 ALLOWED_PITCHES = set().union(*STATE_DEFS.values())
 
+# Pfade relativ zum Projekt
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+DATA_DIR = PROJECT_ROOT / "Daten (MIDI)"
+OUTPUT_DIR = PROJECT_ROOT / "new_state_analysis" / "results"
+
 def midi_to_note_name(midi_num):
     notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
     octave = (midi_num // 12) - 1
     return f"{notes[midi_num % 12]}{octave}"
 
-def process_midi_to_csv(input_file):
+def process_midi_to_csv(input_file: Path, output_dir: Path) -> None:
+    """Liest eine MIDI-Datei und schreibt zwei CSVs ins Ausgabeverzeichnis."""
     mid = mido.MidiFile(input_file)
     
     all_notes = []
@@ -49,13 +57,19 @@ def process_midi_to_csv(input_file):
     df_state_only = df_all[df_all['MIDI_Pitch'].isin(ALLOWED_PITCHES)].copy()
 
     # Export
-    df_all.to_csv('alle_noten_chronologisch.csv', index=False)
-    df_state_only.to_csv('nur_state_noten_chronologisch.csv', index=False)
-    
-    print(f"Verarbeitung abgeschlossen.")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    stem = input_file.stem
+    df_all.to_csv(output_dir / f"{stem}_alle_noten_chronologisch.csv", index=False)
+    df_state_only.to_csv(output_dir / f"{stem}_nur_state_noten_chronologisch.csv", index=False)
+
+    print(f"Verarbeitung abgeschlossen: {input_file.name}")
     print(f"Gesamtanzahl Noten: {len(df_all)}")
     print(f"Anzahl gefilterter State-Noten: {len(df_state_only)}")
 
 if __name__ == "__main__":
     # Installation: pip install mido pandas
-    process_midi_to_csv('MIDI_BE13RE_B1.mid')
+    midi_files = sorted(DATA_DIR.glob("*.midi")) + sorted(DATA_DIR.glob("*.mid"))
+    if not midi_files:
+        print(f"Keine MIDI-Dateien in {DATA_DIR} gefunden.")
+    for midi_file in midi_files:
+        process_midi_to_csv(midi_file, OUTPUT_DIR)

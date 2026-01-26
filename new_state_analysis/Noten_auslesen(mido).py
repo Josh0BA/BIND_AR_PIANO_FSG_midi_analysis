@@ -1,5 +1,7 @@
 import mido
 import csv
+import os
+from pathlib import Path
 
 # 1. Definition deiner States (Notenkombinationen)
 STATE_DEFS = {
@@ -66,5 +68,24 @@ def export_midi_analysis(input_midi, output_csv):
 
 if __name__ == "__main__":
     # Hinweis: Du musst mido installieren: pip install mido
-    # Dateinamen hier anpassen:
-    export_midi_analysis('deine_datei.mid', 'analyse_ergebnisse.csv')
+    
+    # Pfad zum MIDI-Ordner
+    midi_folder = Path(__file__).parent.parent / "Daten (MIDI)"
+    output_folder = Path(__file__).parent / "results"
+    
+    # Erstelle Ausgabeordner falls nicht vorhanden
+    output_folder.mkdir(exist_ok=True)
+    
+    # Verarbeite alle MIDI-Dateien im Ordner
+    midi_files = list(midi_folder.glob("*.midi")) + list(midi_folder.glob("*.mid"))
+    
+    if not midi_files:
+        print(f"Keine MIDI-Dateien in '{midi_folder}' gefunden.")
+    else:
+        print(f"{len(midi_files)} MIDI-Dateien gefunden. Starte Analyse...\n")
+        
+        for midi_file in midi_files:
+            output_csv = output_folder / f"{midi_file.stem}_analysis.csv"
+            print(f"Verarbeite: {midi_file.name}")
+            export_midi_analysis(str(midi_file), str(output_csv))
+            print()
