@@ -107,7 +107,8 @@ def calculate_transitions(states_list, test_type: str = ""):
     Returns:
         List of transition dictionaries with timing metrics and frequency info
     """
-    if len(states_list) < 2:
+    # Handle NaN or non-list values
+    if not isinstance(states_list, list) or len(states_list) < 2:
         return []
     
     # Filter out states that are missing (have 'error': 'MISSING')
