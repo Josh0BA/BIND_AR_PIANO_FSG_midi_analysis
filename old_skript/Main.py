@@ -1,10 +1,11 @@
 # Load Data -> MIDI -> Extract Pitches
 import os
 import re
-from typing import Set, Dict
+from typing import Set, Dict, Tuple
 import pretty_midi
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 from midi_state_analysis.folder_utils import find_midi_data_folder
 
@@ -189,6 +190,82 @@ pre_post_test = [
     8
 ]
 
+# ---------------------------------------------------------------------------
+# Übergangs-Mapping und Häufigkeiten (aus config.py)
+# ---------------------------------------------------------------------------
+
+# Mapping für jeden Übergang: Code -> Häufigkeit (h=häufig, s=selten)
+TRANSITION_FREQUENCIES: Dict[int, str] = {
+    12: "h", 13: "s", 23: "h", 24: "s", 32: "s", 34: "h", 45: "h", 46: "s", 
+    56: "h", 57: "s", 65: "s", 67: "h", 78: "h", 79: "s", 81: "s", 89: "h", 
+    91: "h", 98: "s"
+}
+
+def map_transition_to_code(from_state: int, to_state: int) -> int:
+    """
+    Mappt ein State-Paar auf den Übergangscode.
+    
+    Args:
+        from_state: Ausgangs-State (0-8)
+        to_state: Ziel-State (0-8)
+    
+    Returns:
+        Übergangscode (z.B. 12 für 1->2)
+    
+    Beispiel:
+        >>> map_transition_to_code(1, 2)
+        12
+        >>> map_transition_to_code(8, 0)
+        80
+    """
+    # Da Main_short 0-basiert ist, config aber 1-basiert:
+    # Wir addieren 1 zu jedem State
+    from_display = from_state + 1
+    to_display = to_state + 1
+    
+    return int(f"{from_display}{to_display}")
+
+def get_transition_frequency(transition_code: int) -> str:
+    """
+    Gibt die Häufigkeit eines Übergangs zurück.
+    
+    Args:
+        transition_code: Numerischer Code (z.B. 12, 89)
+    
+    Returns:
+        'h' für häufig, 's' für selten, 'UNKNOWN' wenn nicht definiert
+    """
+    return TRANSITION_FREQUENCIES.get(transition_code, "UNKNOWN")
+
+def get_expected_transitions(test_type: str) -> list:
+    """
+    Erstellt Liste der erwarteten Übergänge basierend auf der State-Sequenz.
+    
+    Args:
+        test_type: Name des Tests (z.B. 'Pretest', 'B1', 'Aufwärmen')
+    
+    Returns:
+        Liste von Übergangscodes in der erwarteten Reihenfolge
+    """
+    test_lower = test_type.lower()
+    
+    if 'auf' in test_lower:
+        sequence = aufwärmen
+    elif test_lower.startswith('b') or 'block' in test_lower:
+        sequence = block
+    elif 'pre' in test_lower or 'post' in test_lower:
+        sequence = pre_post_test
+    else:
+        return []
+    
+    # Konvertiere State-Sequenz zu Übergangs-Sequenz
+    transitions = []
+    for i in range(len(sequence) - 1):
+        code = map_transition_to_code(sequence[i], sequence[i + 1])
+        transitions.append(code)
+    
+    return transitions
+
 # Locate the MIDI data folder named "Daten (MIDI)" using folder_utils.
 # If not found, fall back to the original hardcoded path.
 root_folder = find_midi_data_folder(start_path='.')
@@ -209,22 +286,13 @@ for dirpath, dirnames, filenames in os.walk(root_folder):
             file_path = os.path.join(dirpath, filename)
 
             try:
-                # Extract participant ID and test/attempt from filename
-                # New format: MIDI_{ParticipantID}_{TestAndAttempt}.mid
-                # Example: MIDI_BE16MI_Fingertest1.mid (test name + attempt suffix)
+                # Extract participant ID and test from filename
+                # Format: MIDI_{ParticipantID}_{Test}.mid
+                # Example: MIDI_BE16MI_Fingertest1.mid
                 parts = filename.split('_')
                 if len(parts) >= 3 and parts[0].upper() == 'MIDI':
                     participant_id = parts[1]
-                    test_attempt = parts[2].split('.')[0]
-
-                # Split test name and attempt (attempt expected as trailing digits)
-                match = re.match(r"([A-Za-z]+)(\d+)", test_attempt)
-                if match:
-                    test_name = match.group(1)
-                    attempt = match.group(2)
-                else:
-                    test_name = test_attempt
-                    attempt = '1'
+                    test_name = parts[2].split('.')[0]  # Keep everything after second underscore
 
                 # Extract note keystrokes and Timing
 
@@ -321,8 +389,7 @@ for dirpath, dirnames, filenames in os.walk(root_folder):
                 # prepare the data for DataFrame
                 info = {
                     'Participant_ID': participant_id,
-                    'Test': test_name, #example: Fingertest
-                    'Attempt': attempt, #example: 2
+                    'Test': test_name, #example: Fingertest1, B2, Pretest
                     'detected_states': detected_states,
                     # 'all_pitches': [n['pitch'] for n in played_notes],  # Liste von Werten
                     # 'Keystrokes': len(played_notes),
@@ -456,7 +523,7 @@ for idx, row in df.iterrows():
     else:
         symbol = "❌"
     
-    print(f"\n{symbol} {row['Participant_ID']} - {row['Test']} (Versuch {row['Attempt']})")
+    print(f"\n{symbol} {row['Participant_ID']} - {row['Test']}")
     print(f"   Genauigkeit: {row['accuracy_pct']:.1f}% ({row['correct_count']}/{row['target_length']} korrekt)")
     print(f"   Länge: {row['actual_length']} erkannt vs. {row['target_length']} erwartet")
     
@@ -479,20 +546,31 @@ print(f"\n📊 Ergebnisse gespeichert in 'sequence_analysis_results.csv'")
 
 # Analyze -> Compute transition times between states
 # --- Analyse: Berechnung der Übergangszeiten (Transition Times) ---
-def calculate_transitions(states_list):
+def calculate_transitions(states_list, test_type: str = ""):
     """
     Berechnet die Zeitdifferenzen zwischen aufeinanderfolgenden Zuständen.
+    Erweitert mit Übergangscodes und Häufigkeiten aus config.py.
+    
+    Args:
+        states_list: Liste der erkannten States mit Timing-Informationen
+        test_type: Name des Tests für erwartete Übergangs-Sequenz
     
     Returns:
-        List of transition dictionaries with timing metrics
+        List of transition dictionaries with timing metrics and frequency info
     """
     if len(states_list) < 2:
         return []
     
+    # Filter out states that are missing (have 'error': 'MISSING')
+    valid_states = [s for s in states_list if 'start_time' in s and 'end_time' in s]
+    
+    if len(valid_states) < 2:
+        return []
+    
     transitions = []
-    for i in range(len(states_list) - 1):
-        s1 = states_list[i]
-        s2 = states_list[i + 1]
+    for i in range(len(valid_states) - 1):
+        s1 = valid_states[i]
+        s2 = valid_states[i + 1]
         
         # Berechnung der Intervalle
         onset_to_onset = s2['start_time'] - s1['start_time']
@@ -502,10 +580,15 @@ def calculate_transitions(states_list):
         state_duration = s1['end_time'] - s1['start_time']
         overlap = max(0, s1['end_time'] - s2['start_time'])  # Überlappung (falls negatives offset_to_onset)
         
+        # NEUE FELDER: Übergangscode und Häufigkeit
+        transition_code = map_transition_to_code(s1['state'], s2['state'])
+        frequency = get_transition_frequency(transition_code)
+        
         transitions.append({
             'from_state': s1['state'],
             'to_state': s2['state'],
-            'transition_name': f"{s1['state']}->{s2['state']}",
+            'transition_code': transition_code,  # z.B. 12, 89
+            'frequency': frequency,  # 'h' oder 's'
             'onset_to_onset': round(onset_to_onset, 4),
             'offset_to_onset': round(offset_to_onset, 4),
             'state_duration': round(state_duration, 4),
@@ -514,8 +597,8 @@ def calculate_transitions(states_list):
         })
     return transitions
 
-# 1. Übergänge berechnen
-df['transitions'] = df['detected_states'].apply(calculate_transitions)
+# 1. Übergänge berechnen (mit Test-Typ für erwartete Sequenz)
+df['transitions'] = df.apply(lambda row: calculate_transitions(row['detected_states'], row['Test']), axis=1)
 
 # 2. Durchschnittliche Übergangszeit pro Versuch berechnen (als neue Metrik)
 df['avg_transition_time'] = df['transitions'].apply(
@@ -553,21 +636,29 @@ df['avg_state_duration'] = df['transitions'].apply(
 df['overlap_count'] = df['transitions'].apply(
     lambda x: sum(1 for t in x if t['overlap'] > 0) if x else 0
 )
+
+# 7. NEUE METRIKEN: Häufigkeits-basierte Analyse
+df['frequent_transitions_avg_time'] = df['transitions'].apply(
+    lambda x: round(np.mean([t['onset_to_onset'] for t in x if t.get('frequency') == 'h']), 4) if any(t.get('frequency') == 'h' for t in x) else np.nan
+)
+
+df['rare_transitions_avg_time'] = df['transitions'].apply(
+    lambda x: round(np.mean([t['onset_to_onset'] for t in x if t.get('frequency') == 's']), 4) if any(t.get('frequency') == 's' for t in x) else np.nan
+)
 # --- Export der Ergebnisse: Übergangszeiten als flache Tabelle ---
 transition_rows = []
 for _, row in df.iterrows():
     pid = row['Participant_ID']
     test = row['Test']
-    attempt = row['Attempt']
     for t in row['transitions']:
         transition_rows.append({
             'Participant_ID': pid,
             'Test': test,
-            'Attempt': attempt,
             'position': t['position'],
             'from_state': t['from_state'],
             'to_state': t['to_state'],
-            'transition_name': t['transition_name'],
+            'transition_code': t.get('transition_code', ''),
+            'frequency': t.get('frequency', ''),
             'onset_to_onset': t['onset_to_onset'],
             'offset_to_onset': t['offset_to_onset'],
             'state_duration': t['state_duration'],
@@ -577,3 +668,175 @@ for _, row in df.iterrows():
 df_transitions = pd.DataFrame(transition_rows)
 df_transitions.to_csv('transition_times_results.csv', index=False, encoding='utf-8-sig')
 print("\n📊 Übergangszeiten gespeichert in 'transition_times_results.csv'")
+
+# =========================
+# LEARNING CURVE PLOTTING
+# =========================
+
+def prepare_for_plotting(df_trans: pd.DataFrame) -> pd.DataFrame:
+    """
+    Bereitet transition_times_results.csv für die Plotting-Funktion vor.
+    Mappt Test-Namen zu Block-Namen und benennt Spalten um.
+    """
+    df_plot = df_trans.copy()
+    
+    # Mappe Test-Namen zu Block-Namen
+    def map_test_to_block(test_name: str) -> str:
+        test_lower = str(test_name).lower().strip()
+        if 'pre' in test_lower:
+            return 'pretest'
+        elif 'post' in test_lower:
+            return 'posttest'
+        elif test_lower.startswith('b') and len(test_lower) <= 2:
+            # B1, B2, etc.
+            return test_lower
+        elif 'block' in test_lower:
+            # Extrahiere Nummer wenn vorhanden
+            match = re.search(r'(\d+)', test_lower)
+            if match:
+                return f'b{match.group(1)}'
+        return test_lower  # Fallback
+    
+    df_plot['block'] = df_plot['Test'].apply(map_test_to_block)
+    df_plot['freq'] = df_plot['frequency']
+    df_plot['transition_time_s'] = df_plot['onset_to_onset']
+    
+    # Filtere nur relevante Blöcke
+    block_order = ["pretest", "b1", "b2", "b3", "b4", "b5", "b6", "b7", "b8", "posttest"]
+    df_plot = df_plot[df_plot['block'].isin(block_order)]
+    
+    # Setze Categorical für korrekte Sortierung
+    df_plot['block'] = pd.Categorical(
+        df_plot['block'],
+        categories=block_order,
+        ordered=True
+    )
+    
+    return df_plot
+
+def compute_means(df: pd.DataFrame, freq_filter: str = None) -> pd.DataFrame:
+    """
+    Berechnet Mittelwerte der Übergangszeiten pro Block.
+    
+    Args:
+        df: DataFrame mit 'block', 'freq', 'transition_time_s' Spalten
+        freq_filter: Optional 'h' oder 's' um nur häufige/seltene Übergänge zu nehmen
+    """
+    if freq_filter:
+        df = df[df['freq'] == freq_filter]
+    
+    means = (
+        df.groupby('block', observed=True)['transition_time_s']
+          .mean()
+          .reset_index()
+          .rename(columns={'transition_time_s': 'mean_tt'})
+    )
+    return means
+
+def plot_learning_curve_combined(means_dict: dict, title: str, out_path: str) -> None:
+    """
+    Erstellt einen kombinierten Plot mit mehreren Kurven.
+    Pretest und Posttest werden als separate Punkte ohne Verbindung zu B1-B8 dargestellt.
+    
+    Args:
+        means_dict: Dictionary {label: DataFrame mit 'block' und 'mean_tt' Spalten}
+        title: Plot-Titel
+        out_path: Ausgabe-Pfad für PNG
+    """
+    plt.figure(figsize=(12, 5))
+    
+    for label, means_df in means_dict.items():
+        means_df = means_df.sort_values('block')
+        
+        # Teile die Daten in drei Segmente: pretest, b1-b8, posttest
+        pretest_data = means_df[means_df['block'] == 'pretest']
+        training_data = means_df[means_df['block'].isin(['b1', 'b2', 'b3', 'b4', 'b5', 'b6', 'b7', 'b8'])]
+        posttest_data = means_df[means_df['block'] == 'posttest']
+        
+        # Plot pretest (einzelner Punkt, keine Linie)
+        if not pretest_data.empty:
+            plt.plot(
+                pretest_data['block'].astype(str),
+                pretest_data['mean_tt'],
+                marker='o',
+                markersize=8,
+                linestyle='None',
+                label=label if training_data.empty and posttest_data.empty else None
+            )
+        
+        # Plot training blocks (b1-b8) mit verbundener Linie
+        if not training_data.empty:
+            plt.plot(
+                training_data['block'].astype(str),
+                training_data['mean_tt'],
+                linewidth=2,
+                marker='o',
+                label=label
+            )
+        
+        # Plot posttest (einzelner Punkt, keine Linie)
+        if not posttest_data.empty:
+            plt.plot(
+                posttest_data['block'].astype(str),
+                posttest_data['mean_tt'],
+                marker='o',
+                markersize=8,
+                linestyle='None',
+                label=None  # Keine separate Label für posttest
+            )
+    
+    plt.title(title)
+    plt.xlabel('Block')
+    plt.ylabel('Transition time (s)')
+    plt.grid(True, axis='y', alpha=0.3)
+    plt.legend(loc='center left', bbox_to_anchor=(1.02, 0.5))
+    plt.tight_layout()
+    plt.savefig(out_path, dpi=200)
+    plt.close()
+    print(f"📈 Plot gespeichert: {out_path}")
+
+# Erstelle Plot-Verzeichnis
+PLOT_DIR = 'Plots'
+os.makedirs(PLOT_DIR, exist_ok=True)
+
+# Bereite Daten für Plotting vor
+print("\n" + "="*100)
+print("LEARNING CURVE PLOTS")
+print("="*100)
+
+try:
+    df_plot = prepare_for_plotting(df_transitions)
+    
+    # Berechne Mittelwerte für alle, häufige und seltene Übergänge
+    means_all = compute_means(df_plot)
+    means_all['label'] = 'all'
+    
+    means_h = compute_means(df_plot, 'h')
+    means_h['label'] = 'frequent (h)'
+    
+    means_s = compute_means(df_plot, 's')
+    means_s['label'] = 'rare (s)'
+    
+    # Erstelle Dictionary für Plot-Funktion
+    means_dict = {
+        'all': means_all[['block', 'mean_tt']],
+        'frequent (h)': means_h[['block', 'mean_tt']],
+        'rare (s)': means_s[['block', 'mean_tt']]
+    }
+    
+    # Erstelle kombinierten Plot
+    plot_path = os.path.join(PLOT_DIR, 'learning_curve_all_h_s.png')
+    plot_learning_curve_combined(
+        means_dict,
+        'Learning curve during the acquisition phase',
+        plot_path
+    )
+    
+    print("✅ Learning Curve Plot erfolgreich erstellt")
+    
+except Exception as e:
+    print(f"⚠️  Fehler beim Erstellen der Plots: {e}")
+
+print("\n" + "="*100)
+print("ANALYSE ABGESCHLOSSEN")
+print("="*100)
