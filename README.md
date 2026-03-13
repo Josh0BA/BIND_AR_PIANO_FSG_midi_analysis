@@ -2,9 +2,7 @@
 Analyse von MIDI-Dateien für das Motorik-lernen am Klavier mit AR. 
 
 Anleitung:																													
--Installation
-Lade das Projekt herunter oder klone das Repository. Installiere das Paket anschließend mit:
-pip install .
+-Installation, Lade das Projekt herunter oder klone das Repository.
 
 -Daten vorbereiten
 Erstelle einen Ordner mit dem Namen „Daten (MIDI)“. Lege darin Unterordner für jede Versuchsperson an, und speichere die jeweiligen MIDI-Dateien dort ab. Beispiel:
