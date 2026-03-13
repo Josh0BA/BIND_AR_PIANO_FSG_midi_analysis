@@ -7,8 +7,31 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-from midi_state_analysis.folder_utils import find_midi_data_folder
+def find_midi_data_folder(start_path: str = '.', target_folder: str = 'Daten (MIDI)'):
+    """
+    Sucht rekursiv nach dem MIDI-Datenordner und gibt dessen absoluten Pfad zurück.
 
+    Args:
+        start_path: Startpunkt der Suche
+        target_folder: Name des gesuchten Ordners
+
+    Returns:
+        Absoluter Pfad zum gefundenen Ordner oder None
+    """
+    start_abs = os.path.abspath(start_path)
+
+    # 1) Direkter Treffer im Startordner
+    candidate = os.path.join(start_abs, target_folder)
+    if os.path.isdir(candidate):
+        return os.path.normpath(candidate)
+
+    # 2) Rekursive Suche unterhalb des Startordners
+    for dirpath, dirnames, _ in os.walk(start_abs):
+        if target_folder in dirnames:
+            return os.path.normpath(os.path.join(dirpath, target_folder))
+
+    return None
+    
 # ---------------------------------------------------------------------------
 # 1. State-Definitionen (fixes Mapping deiner 9 Zustände)
 # ---------------------------------------------------------------------------
