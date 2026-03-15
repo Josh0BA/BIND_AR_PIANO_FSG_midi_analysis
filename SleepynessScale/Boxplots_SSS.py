@@ -101,6 +101,24 @@ sns.stripplot(
     ax=ax
 )
 
+# Mittelwerte und 95%-Konfidenzintervalle aus der Statistik in Figure 1 darstellen
+x_pos = np.arange(len(phase_order))
+means = summary.loc[phase_order, 'mean'].to_numpy()
+ci95 = summary.loc[phase_order, 'ci95'].to_numpy()
+ax.errorbar(
+    x=x_pos,
+    y=means,
+    yerr=ci95,
+    fmt='D-',
+    color='#1f77b4',
+    linewidth=2,
+    capsize=6,
+    markersize=8,
+    zorder=4,
+    label='Mittelwert ± 95% KI'
+)
+ax.legend(loc='upper right')
+
 # 6a. Beschriftung Grafik 1
 plt.title('Sleepiness Scale: Boxplots', fontsize=16)
 plt.ylabel('Skala-Werte', fontsize=14)
@@ -111,45 +129,12 @@ ax.set_ylim(0.5, 7)
 ax.set_yticks(np.arange(1, 8, 1))
 plt.tight_layout()
 
-# 5b. Grafik 2: Mittelwerte mit 95%-Konfidenzintervallen
-plt.figure(figsize=(10, 6))
-ax = sns.stripplot(
-    x='Test-Phasen',
-    y='Skala-Werte',
-    data=data_to_plot,
-    order=phase_order,
-    color='black',
-    size=4,
-    alpha=0.35,
-    jitter=True,
-    ax=ax
-)
+# 6. Grafik im bestehenden Projektordner Plots speichern
+project_dir = os.path.dirname(script_dir)
+plots_dir = os.path.join(project_dir, 'Plots')
+plot_path = os.path.join(plots_dir, 'SSS_boxplots.png')
+plt.savefig(plot_path, dpi=300, bbox_inches='tight')
+print(f"Grafik gespeichert: {plot_path}")
 
-x_pos = np.arange(len(phase_order))
-means = summary.loc[phase_order, 'mean'].to_numpy()
-ci95 = summary.loc[phase_order, 'ci95'].to_numpy()
-
-ax.errorbar(
-    x=x_pos,
-    y=means,
-    yerr=ci95,
-    fmt='D-',
-    color='#1f77b4',
-    linewidth=2,
-    capsize=6,
-    markersize=8,
-    zorder=3
-)
-
-# 6b. Beschriftung Grafik 2
-plt.title('Sleepiness Scale: Mittelwerte mit 95%-Konfidenzintervallen', fontsize=16)
-plt.ylabel('Skala-Werte', fontsize=14)
-plt.xlabel('Test-Phasen', fontsize=14)
-ax.tick_params(axis='x', labelsize=12)
-ax.tick_params(axis='y', labelsize=12)
-ax.grid(axis='y', linestyle='--', alpha=0.35)
-sns.despine(ax=ax)
-
-# 6. Anzeigen
-plt.tight_layout()
+# 7. Anzeigen
 plt.show()

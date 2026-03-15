@@ -20,6 +20,8 @@ setup(
         "seaborn",
         "scipy",
         "statsmodels",
+        "openpyxl",
+        "python-calamine",
     ],
     extras_require={
         "excel": ["openpyxl", "python-calamine"],
