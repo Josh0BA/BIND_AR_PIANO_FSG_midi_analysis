@@ -3,6 +3,9 @@ from setuptools import setup
 
 README = Path(__file__).with_name("README.md")
 
+# type: C:/Users/joshb/AppData/Local/Programs/Python/Python314/python.exe -m pip install -e .
+# for extra: C:/Users/joshb/AppData/Local/Programs/Python/Python314/python.exe -m pip install -e ".[excel]"
+
 setup(
     name="bind-ar-piano-midi-analysis",
     version="1.0.1",
@@ -20,8 +23,6 @@ setup(
         "seaborn",
         "scipy",
         "statsmodels",
-        "openpyxl",
-        "python-calamine",
     ],
     extras_require={
         "excel": ["openpyxl", "python-calamine"],
