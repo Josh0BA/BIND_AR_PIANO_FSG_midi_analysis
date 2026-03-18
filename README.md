@@ -1,5 +1,7 @@
 # BIND_AR_PIANO_FSG_midi_analysis
 
+Daniel was here!
+
 Repository for MIDI-based piano motor-learning analysis (AR study context), including:
 
 - state-transition timing analysis from MIDI sequences,
