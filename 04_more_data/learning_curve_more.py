@@ -83,6 +83,7 @@ def prepare_for_plotting(df_trans: pd.DataFrame) -> pd.DataFrame:
     
     return df_plot
 
+# Fasst alle Transitionen pro Block zusammen und berechnet Mittelwert + 95%-CI.
 def compute_means(df: pd.DataFrame, freq_filter: str = None) -> pd.DataFrame:
     """
     Berechnet Mittelwerte und 95% Konfidenzintervalle der Übergangszeiten pro Block.
@@ -110,6 +111,7 @@ def compute_means(df: pd.DataFrame, freq_filter: str = None) -> pd.DataFrame:
     return means
 
 
+# Berechnet Mittelwert + 95%-CI getrennt je transition_code und Block.
 def compute_means_per_transition(df: pd.DataFrame, freq_filter: str = None) -> pd.DataFrame:
     """
     Berechnet Mittelwerte und 95% Konfidenzintervalle pro transition_code und Block.

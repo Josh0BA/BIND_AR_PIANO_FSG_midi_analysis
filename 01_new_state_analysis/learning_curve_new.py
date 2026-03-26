@@ -77,6 +77,7 @@ def compute_means(df: pd.DataFrame, freq_filter: str = None) -> pd.DataFrame:
         df: DataFrame mit 'block', 'freq', 'transition_time_s' Spalten
         freq_filter: Optional 'h' oder 's' um nur häufige/seltene Übergänge zu nehmen
     """
+    # Optional nach Frequenz filtern und dann pro Block Mittelwert sowie 95%-CI der Übergangszeit berechnen.
     if freq_filter:
         df = df[df['freq'] == freq_filter]
     
