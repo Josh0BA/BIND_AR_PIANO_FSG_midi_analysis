@@ -197,6 +197,7 @@ python SleepynessScale/Statistical_analysis_SSS.py
 From `Boxplots_SSS.py`:
 
 - interactive plots shown via matplotlib
+- `SSS_boxplots.png` (saved to `Plots/`)
 - `SleepynessScale_deskriptive_statistik.csv`
 
 From `Statistical_analysis_SSS.py`:
