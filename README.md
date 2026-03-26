@@ -23,7 +23,7 @@ The project contains three analysis blocks:
 	- Counts correct note sequence matches and keystrokes.
 	- Exports participant-level dexterity table (`fingergeschicklichkeit.csv`).
 
-3. `SleepynessScale/`
+3. `Sleepiness_Scale/`
 	- Loads SSS data from Excel or CSV.
 	- Creates boxplots and descriptive statistics.
 	- Runs repeated-measures statistics (ANOVA/Friedman + post-hoc).
