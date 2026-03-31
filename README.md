@@ -10,7 +10,7 @@ Repository for MIDI-based piano motor-learning analysis (AR study context), incl
 
 ## Overview
 
-The project contains three analysis blocks:
+The project contains four analysis blocks:
 
 1. `new_state_analysis/`
 	- Detects predefined pitch-set states (`state0` to `state8`) from MIDI.
@@ -27,6 +27,12 @@ The project contains three analysis blocks:
 	- Loads SSS data from Excel or CSV.
 	- Creates boxplots and descriptive statistics.
 	- Runs repeated-measures statistics (ANOVA/Friedman + post-hoc).
+
+4. `more_data/`
+	- Extended state-transition analysis on additional datasets.
+	- Includes control and learning curve analysis for larger sample sizes.
+
+
 
 ## Repository Structure
 
@@ -46,6 +52,10 @@ BIND_AR_PIANO_FSG_midi_analysis/
 |   |-- pre_post_plot.py
 |   |-- statistical_analysis_blocks.py
 |   `-- statistical_analysis_pre_post.py
+|-- more_data/
+|   |-- Main.py
+|   |-- control_more.py
+|   `-- learning_curve_more.py
 `-- SleepynessScale/
 	 |-- Boxplots_SSS.py
 	 `-- Statistical_analysis_SSS.py

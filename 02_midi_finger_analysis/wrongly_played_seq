@@ -1,0 +1,49 @@
+# ✅ Loaded: C:\Users\tobia\Documents\BIND_AR_PIANO_ISG_midi_state_analysis\Daten (MIDI)\LN15CH\MIDI_LN15CH_Fingerttest1.mid
+# Played notes for LN15CH: 
+
+LN15CH_seq_1 = ['B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4']
+
+# ✅ Loaded: C:\Users\tobia\Documents\BIND_AR_PIANO_ISG_midi_state_analysis\Daten (MIDI)\LN15CH\MIDI_LN15CH_Fingerttest2.mid
+# Played notes for LN15CH: 
+LN15CH_seq_2 = ['C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3']
+
+# ✅ Loaded: C:\Users\tobia\Documents\BIND_AR_PIANO_ISG_midi_state_analysis\Daten (MIDI)\LN15CH\MIDI_LN15CH_Fingerttest3.mid
+# Played notes for LN15CH: 
+LN15CH_seq_3 = ['C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4']
+
+# ✅ Loaded: C:\Users\tobia\Documents\BIND_AR_PIANO_ISG_midi_state_analysis\Daten (MIDI)\LN15CH\MIDI_LN15CH_Fingerttest4.mid
+# Played notes for LN15CH: 
+LN15CH_seq_4 = ['C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4', 'C4', 'G3', 'B3', 'A3', 'C4']
+
+
+
+# Your expected pattern (adjust to match what they were supposed to play)
+#intended seq ['F4', 'C4', 'E4', 'D4', 'F4']
+expected_seq_LN15CH = ['C4', 'G3', 'B3', 'A3', 'C4']
+sequence_len = len(expected_seq_LN15CH)
+
+
+correct_seq_LN15CH_1 = 0
+for i in range(len(LN15CH_seq_1) - sequence_len + 1):
+    if LN15CH_seq_1[i:i+sequence_len] == expected_seq_LN15CH:
+        correct_seq_LN15CH_1 += 1
+
+correct_seq_LN15CH_2 = 0
+for i in range(len(LN15CH_seq_2) - sequence_len + 1):
+    if LN15CH_seq_2[i:i+sequence_len] == expected_seq_LN15CH:
+        correct_seq_LN15CH_2 += 1
+
+correct_seq_LN15CH_3 = 0
+for i in range(len(LN15CH_seq_2) - sequence_len + 1):
+    if LN15CH_seq_3[i:i+sequence_len] == expected_seq_LN15CH:
+        correct_seq_LN15CH_3 += 1
+
+correct_seq_LN15CH_4 = 0
+for i in range(len(LN15CH_seq_2) - sequence_len + 1):
+    if LN15CH_seq_3[i:i+sequence_len] == expected_seq_LN15CH:
+        correct_seq_LN15CH_4 += 1
+
+print(f"Correct sequences for 1: {correct_seq_LN15CH_1}")
+print(f"Correct sequences for 2: {correct_seq_LN15CH_2}")
+print(f"Correct sequences for 3: {correct_seq_LN15CH_3}")
+print(f"Correct sequences for 4: {correct_seq_LN15CH_3}")
