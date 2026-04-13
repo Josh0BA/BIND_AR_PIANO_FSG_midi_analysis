@@ -18,7 +18,15 @@ from scipy.stats import ttest_rel
 # Get CSV path relative to this script's location
 script_dir = os.path.dirname(os.path.abspath(__file__))
 print(script_dir)
-csv_path = os.path.join(script_dir, "..", "fingergeschicklichkeit.csv")
+candidate_paths = [
+    os.path.join(script_dir, "..", "fingergeschicklichkeit.csv"),
+    os.path.join(script_dir, "fingergeschicklichkeit.csv"),
+]
+csv_path = next((p for p in candidate_paths if os.path.exists(p)), None)
+if csv_path is None:
+    raise FileNotFoundError(
+        "Could not find 'fingergeschicklichkeit.csv'. Run 02_midi_finger_analysis/load_MIDI_finger.py first."
+    )
 
 df_finger = pd.read_csv(csv_path)
 
@@ -76,7 +84,7 @@ cols_per_row = 4  # Adjust this to control layout
 rows = math.ceil(num_plots / cols_per_row)
 
 # Create subplots
-fig, axes = plt.subplots(nrows=rows, ncols=cols_per_row, figsize=(6 * cols_per_row, 5 * rows))
+fig, axes = plt.subplots(nrows=rows, ncols=cols_per_row, figsize=(6.5 * cols_per_row, 5.5 * rows))
 axes = axes.flatten()  # Flatten in case of multi-row layout-
 
 # Plot each boxplot
@@ -85,7 +93,11 @@ for i, col in enumerate(cols):
     sns.boxplot(y=col, data=df_finger_clean, ax=ax)
     sns.stripplot(y=col, data=df_finger_clean, color='black', size=6, jitter=True, ax=ax)
     ax.set_title(f'{col}', fontsize=16)
-    ax.set_ylabel('Value', fontsize=14)
+    # Show y-label only on first column of each row to avoid label overlap.
+    if i % cols_per_row == 0:
+        ax.set_ylabel('Value', fontsize=14)
+    else:
+        ax.set_ylabel('')
 
     ax.tick_params(axis='y', labelsize=12)
 
@@ -99,5 +111,5 @@ for i, col in enumerate(cols):
 for j in range(i + 1, len(axes)):
     fig.delaxes(axes[j])
 
-plt.tight_layout()
+plt.tight_layout(pad=2.0, w_pad=3.0, h_pad=2.5)
 plt.show()

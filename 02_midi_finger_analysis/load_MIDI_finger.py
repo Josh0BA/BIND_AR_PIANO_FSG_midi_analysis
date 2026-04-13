@@ -4,13 +4,35 @@ import pretty_midi
 import pandas as pd
 import numpy as np
 
-from midi_state_analysis.folder_utils import find_midi_data_folder
+
+def find_midi_data_folder(start_path='.'):
+    """Return absolute path to the first folder named 'Daten (MIDI)' found upward/downward."""
+    start_abs = os.path.abspath(start_path)
+
+    # Check current and parent folders first.
+    current = start_abs
+    while True:
+        candidate = os.path.join(current, 'Daten (MIDI)')
+        if os.path.isdir(candidate):
+            return candidate
+        parent = os.path.dirname(current)
+        if parent == current:
+            break
+        current = parent
+
+    # Fallback: recursive search below the start path.
+    for dirpath, dirnames, _ in os.walk(start_abs):
+        if 'Daten (MIDI)' in dirnames:
+            return os.path.join(dirpath, 'Daten (MIDI)')
+    return None
 
 # Locate the MIDI data folder named "Daten (MIDI)" using folder_utils.
 # If not found, fall back to the original hardcoded path.
-root_folder = find_midi_data_folder(start_path='.')
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(script_dir, '..'))
+root_folder = find_midi_data_folder(start_path=project_root)
 if root_folder is None:
-    root_folder = r"..\Daten (MIDI)"
+    root_folder = os.path.join(project_root, 'Daten (MIDI)')
     print(f"Warning: 'Daten (MIDI)' not found; falling back to {root_folder}")
 else:
     print(f"Using MIDI data folder: {root_folder}")
@@ -138,8 +160,8 @@ for col in df_combined.columns:
         if timepoint_col not in df_combined.columns: 
             df_combined[timepoint_col] = 'Posttest' 
 
-# Save CSV in the same directory as the MIDI data folder
-output_path = os.path.join(os.path.dirname(root_folder), "fingergeschicklichkeit.csv")
+# Save CSV in the repository root so analysis scripts can find it consistently.
+output_path = os.path.join(project_root, "fingergeschicklichkeit.csv")
 df_combined.to_csv(output_path, index=False)
 
 print(f"✓ Analyse abgeschlossen: {output_path}")
