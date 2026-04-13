@@ -205,7 +205,7 @@ def plot_learning_curve_combined(means_dict: dict, title: str, out_path: str, df
     plt.ylabel('Transition time (s)')
     plt.ylim(1.5, 2.6)
     plt.grid(True, axis='y', alpha=0.3)
-    plt.legend(loc='center left', bbox_to_anchor=(1.02, 0.5))
+    plt.legend(loc='upper right')
     plt.tight_layout()
     plt.savefig(out_path, dpi=200)
     plt.close()

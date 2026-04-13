@@ -8,6 +8,13 @@ import math
 
 from control import df_transitions
 
+# Farbzuordnung konsistent mit learning_curve_new.py
+FREQ_PALETTE = {
+    'h': '#ff7f0e',  # frequent
+    's': '#2ca02c',  # rare
+}
+FREQ_ORDER = ['h', 's']
+
 # =========================
 # Pre-/ Posttest Box PLOTTING
 # =========================
@@ -100,7 +107,8 @@ def plot_pre_post_boxplots(df_plot: pd.DataFrame, out_dir: str = 'Plots') -> Non
             y=metric,
             hue='freq',
             ax=ax,
-            palette='Set2'
+            palette=FREQ_PALETTE,
+            hue_order=FREQ_ORDER
         )
         sns.stripplot(
             data=df_plot,
@@ -157,7 +165,8 @@ def plot_pre_post_violin(df_plot: pd.DataFrame, out_dir: str = 'Plots') -> None:
             y=metric,
             hue='freq',
             ax=ax,
-            palette='Set2'
+            palette=FREQ_PALETTE,
+            hue_order=FREQ_ORDER
         )
         sns.stripplot(
             data=df_plot,
